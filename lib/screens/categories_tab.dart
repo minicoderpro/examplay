@@ -13,9 +13,7 @@ class _CategoriesTabState extends State<CategoriesTab> {
   final BloggerService _bloggerService = BloggerService();
   List<Map<String, dynamic>> _categories = [];
   bool _isLoading = false;
-  bool _isRefreshing = false;
   String? _errorMessage;
-  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -23,38 +21,30 @@ class _CategoriesTabState extends State<CategoriesTab> {
     _loadCategories();
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
   Future<void> _loadCategories() async {
-    if (!_isRefreshing) {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
-    }
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
     try {
       final categories = await _bloggerService.fetchCategories();
       if (mounted) {
         setState(() {
-          _categories = categories;
+          _categories = List<Map<String, dynamic>>.from(categories);
+          _categories.sort((a, b) => (b['postCount'] ?? 0).compareTo(a['postCount'] ?? 0));
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = 'Failed to load categories: ${e.toString()}';
+          _errorMessage = 'Failed to load categories';
         });
       }
     } finally {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _isRefreshing = false;
         });
       }
     }
@@ -69,152 +59,45 @@ class _CategoriesTabState extends State<CategoriesTab> {
     );
   }
 
-  List<Map<String, dynamic>> _getFilteredCategories() {
-    final query = _searchController.text.toLowerCase();
-    if (query.isEmpty) return _categories;
-
-    return _categories.where((category) {
-      final name = category['name']?.toString().toLowerCase() ?? '';
-      return name.contains(query);
-    }).toList();
-  }
-
   @override
   Widget build(BuildContext context) {
-    final filteredCategories = _getFilteredCategories();
-    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            title: const Text('Exam Categories'),
-            backgroundColor: colorScheme.primary,
-            floating: true,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: () {
-                  setState(() => _isRefreshing = true);
-                  _loadCategories();
-                },
-              ),
-            ],
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(60),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: (_) => setState(() {}),
-                  decoration: InputDecoration(
-                    hintText: 'Search categories...',
-                    prefixIcon: const Icon(Icons.search),
-                    filled: true,
-                    fillColor: Colors.white.withAlpha(229),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                  ),
-                ),
-              ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _errorMessage != null
+          ? Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(_errorMessage!),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadCategories,
+              child: const Text('Retry'),
             ),
-          ),
-          if (_isLoading)
-            SliverToBoxAdapter(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: CircularProgressIndicator(
-                    color: colorScheme.primary,
-                  ),
-                ),
-              ),
-            ),
-          if (_errorMessage != null)
-            SliverFillRemaining(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        _errorMessage!,
-                        style: TextStyle(
-                          color: colorScheme.error,
-                          fontSize: 16,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _loadCategories,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colorScheme.primary,
-                          foregroundColor: colorScheme.onPrimary,
-                        ),
-                        child: const Text('Try Again'),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          if (!_isLoading && _errorMessage == null)
-            SliverPadding(
-              padding: const EdgeInsets.all(16),
-              sliver: filteredCategories.isEmpty
-                  ? SliverFillRemaining(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.category,
-                        size: 48,
-                        color: Colors.grey[400],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _searchController.text.isEmpty
-                            ? 'No categories found'
-                            : 'No matching categories',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-                  : SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 0.9,
-                ),
-                delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                    final category = filteredCategories[index];
-                    return _CategoryCard(
-                      name: category['name'] ?? 'Uncategorized',
-                      postCount: (category['postCount'] ?? 0) as int,
-                      onTap: () => _handleCategoryTap(
-                        context,
-                        category['name'] ?? '',
-                      ),
-                    );
-                  },
-                  childCount: filteredCategories.length,
-                ),
-              ),
-            ),
-        ],
+          ],
+        ),
+      )
+          : _categories.isEmpty
+          ? const Center(child: Text('No categories available'))
+          : GridView.builder(
+        padding: const EdgeInsets.all(16),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: 0.9,
+        ),
+        itemCount: _categories.length,
+        itemBuilder: (context, index) {
+          final category = _categories[index];
+          return _CategoryCard(
+            name: category['name'] ?? 'Uncategorized',
+            postCount: (category['postCount'] ?? 0) as int,
+            onTap: () => _handleCategoryTap(context, category['name'] ?? ''),
+          );
+        },
       ),
     );
   }
@@ -233,7 +116,6 @@ class _CategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final color = _getCategoryColor(name);
 
     return Card(
@@ -261,7 +143,7 @@ class _CategoryCard extends StatelessWidget {
                   color: color,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               Text(
                 name,
                 style: const TextStyle(
@@ -272,15 +154,13 @@ class _CategoryCard extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 4),
-              Chip(
-                label: Text('$postCount posts'),
-                backgroundColor: colorScheme.primary.withAlpha(25),
-                labelStyle: TextStyle(
-                  color: colorScheme.primary,
+              const SizedBox(height: 8),
+              Text(
+                '$postCount posts',
+                style: TextStyle(
                   fontSize: 12,
+                  color: Colors.grey[600],
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               ),
             ],
           ),
@@ -303,12 +183,12 @@ class _CategoryCard extends StatelessWidget {
 
   IconData _getCategoryIcon(String categoryName) {
     final lowerName = categoryName.toLowerCase();
-    if (lowerName.contains('univ') || lowerName.contains('college')) return Icons.school;
-    if (lowerName.contains('med') || lowerName.contains('health')) return Icons.medical_services;
-    if (lowerName.contains('eng') || lowerName.contains('tech')) return Icons.engineering;
-    if (lowerName.contains('bank') || lowerName.contains('finan')) return Icons.account_balance;
-    if (lowerName.contains('bcs') || lowerName.contains('gov')) return Icons.gavel;
-    if (lowerName.contains('job') || lowerName.contains('career')) return Icons.work;
+    if (lowerName.contains('univ')) return Icons.school;
+    if (lowerName.contains('med')) return Icons.medical_services;
+    if (lowerName.contains('eng')) return Icons.engineering;
+    if (lowerName.contains('bank')) return Icons.account_balance;
+    if (lowerName.contains('bcs')) return Icons.gavel;
+    if (lowerName.contains('job')) return Icons.work;
     return Icons.category;
   }
 }

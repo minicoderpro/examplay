@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:examplay/services/blogger_service.dart';
-import 'package:examplay/widgets/post_card.dart';
+import 'package:examplay/widgets/post_detail_view.dart';
 
 class CategoryPostsScreen extends StatefulWidget {
   final String category;
@@ -20,16 +20,14 @@ class _CategoryPostsScreenState extends State<CategoryPostsScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchCategoryPosts();
+    _loadPosts();
   }
 
-  Future<void> _fetchCategoryPosts() async {
-    if (mounted) {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
-    }
+  Future<void> _loadPosts() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
     try {
       final data = await _bloggerService.fetchPostsByCategory(widget.category);
@@ -41,7 +39,7 @@ class _CategoryPostsScreenState extends State<CategoryPostsScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = 'Failed to load posts for ${widget.category}';
+          _errorMessage = 'Failed to load posts';
         });
       }
     } finally {
@@ -56,28 +54,111 @@ class _CategoryPostsScreenState extends State<CategoryPostsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.category),
-        backgroundColor: const Color(0xFF4289CE),
-      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
           ? Center(child: Text(_errorMessage!))
           : _posts.isEmpty
-          ? const Center(child: Text('No posts found in this category'))
+          ? Center(child: Text('No posts in ${widget.category}'))
           : ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: _posts.length,
         itemBuilder: (context, index) {
-          return PostCard(post: _posts[index]);
+          final post = _posts[index];
+          final thumbnailUrl = post['images']?.isNotEmpty == true
+              ? post['images'][0]['url']
+              : 'https://via.placeholder.com/150';
+
+          return Card(
+            margin: const EdgeInsets.only(bottom: 16),
+            child: InkWell(
+              onTap: () => _showPostDetail(context, post),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        image: DecorationImage(
+                          image: NetworkImage(thumbnailUrl),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            post['title'] ?? 'No title',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _extractPlainText(post['content'] ?? ''),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              _formatDate(post['published'] ?? ''),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _fetchCategoryPosts,
-        backgroundColor: const Color(0xFF4289CE),
-        child: const Icon(Icons.refresh, color: Colors.white),
+    );
+  }
+
+  void _showPostDetail(BuildContext context, dynamic post) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PostDetailView(post: post),
       ),
     );
+  }
+
+  String _extractPlainText(String htmlString) {
+    return htmlString
+        .replaceAll(RegExp(r'<[^>]*>'), '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
+  String _formatDate(String dateString) {
+    try {
+      final date = DateTime.parse(dateString);
+      return '${date.day}/${date.month}/${date.year}';
+    } catch (e) {
+      return dateString;
+    }
   }
 }
