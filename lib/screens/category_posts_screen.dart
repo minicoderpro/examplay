@@ -55,7 +55,7 @@ class _CategoryPostsScreenState extends State<CategoryPostsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Examplay'),
+        title: Text(widget.category),
         backgroundColor: const Color(0xFF4289CE),
         elevation: 0,
         leading: IconButton(
