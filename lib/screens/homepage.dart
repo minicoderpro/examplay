@@ -7,7 +7,6 @@ import 'package:examplay/widgets/post_grid_item.dart';
 import 'package:examplay/widgets/load_more_button.dart';
 import 'package:examplay/screens/categories_tab.dart';
 import 'package:examplay/screens/developer_tab.dart';
-
 import '../widgets/post_detail_view.dart';
 
 class HomePage extends StatefulWidget {
@@ -178,7 +177,6 @@ class _HomePageState extends State<HomePage> {
         return PostCard(
           post: _filteredPosts[index],
           onTap: () {
-
             Navigator.push(context, MaterialPageRoute(
             builder: (context) => PostDetailView(post: _filteredPosts[index]),
             ));

@@ -12,6 +12,11 @@ class PostDetailView extends StatelessWidget {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
+            title: Text(
+              post['title'] ?? 'No title',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            backgroundColor: const Color(0xFF4289CE),
             expandedHeight: 200,
             flexibleSpace: FlexibleSpaceBar(
               background: Image.network(
