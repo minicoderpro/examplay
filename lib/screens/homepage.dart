@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:examplay/services/blogger_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -9,35 +12,314 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
+  final BloggerService _bloggerService = BloggerService();
+  List<dynamic> _posts = [];
+  String? _nextPageToken;
+  bool _isLoading = false;
+  final PageController _sliderController = PageController();
+  final TextEditingController _searchController = TextEditingController();
 
-  final List<Widget> _pages = [
-    const HomeTab(),
-    const StudyTab(),
-    const ProfileTab(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadPosts();
+  }
+
+  Future<void> _loadPosts({bool loadMore = false}) async {
+    if (_isLoading) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final data = await _bloggerService.fetchPosts(
+        maxResults: 10,
+        pageToken: loadMore ? _nextPageToken : null,
+      );
+
+      setState(() {
+        if (loadMore) {
+          _posts.addAll(data['items']);
+        } else {
+          _posts = data['items'];
+        }
+        _nextPageToken = data['nextPageToken'];
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading posts: ${e.toString()}')),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Examplay',
+        title: const Text('Examplay'),
+        backgroundColor: const Color(0xFF4289CE),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            onPressed: () {},
+          ),
+        ],
+      ),
+      body: _buildCurrentTab(),
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (_nextPageToken != null && _currentIndex == 0) _buildLoadMoreButton(),
+          _buildBottomNavigationBar(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCurrentTab() {
+    switch (_currentIndex) {
+      case 0:
+        return _buildHomeTab();
+      case 1:
+        return const StudyTab();
+      case 2:
+        return const ProfileTab();
+      default:
+        return const SizedBox();
+    }
+  }
+
+  Widget _buildHomeTab() {
+    return Column(
+      children: [
+        // Image Slider at the top
+        if (_posts.isNotEmpty) _buildImageSlider(),
+
+        // Search Bar
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: 'Search posts...',
+              prefixIcon: const Icon(Icons.search),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(30),
+                borderSide: const BorderSide(color: Color(0xFFDDDDDD)),
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 0),
+            ),
+            onChanged: (value) {
+              // Implement search functionality here
+            },
+          ),
+        ),
+
+        // Posts List
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: () => _loadPosts(loadMore: false),
+            child: _buildPostList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImageSlider() {
+    final featuredPosts = _posts.length > 5 ? _posts.sublist(0, 5) : _posts;
+
+    return SizedBox(
+      height: 180,
+      child: Stack(
+        children: [
+          PageView.builder(
+            controller: _sliderController,
+            itemCount: featuredPosts.length,
+            onPageChanged: (index) {
+              setState(() {
+              });
+            },
+            itemBuilder: (context, index) {
+              final post = featuredPosts[index];
+              final imageUrl = post['images']?.isNotEmpty == true
+                  ? post['images'][0]['url']
+                  : 'https://via.placeholder.com/400x180';
+
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 8),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    imageUrl,
+                    fit: BoxFit.fill,
+                    width: double.infinity,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: Colors.grey[300],
+                      child: const Icon(Icons.error),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          Positioned(
+            bottom: 10,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: SmoothPageIndicator(
+                controller: _sliderController,
+                count: featuredPosts.length,
+                effect: const WormEffect(
+                  dotHeight: 8,
+                  dotWidth: 8,
+                  activeDotColor: Color(0xFF4289CE),
+                  dotColor: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPostList() {
+    return ListView.builder(
+      padding: const EdgeInsets.only(top: 8),
+      itemCount: _posts.length,
+      itemBuilder: (context, index) {
+        return _buildPostListItem(_posts[index]);
+      },
+    );
+  }
+
+  Widget _buildPostListItem(dynamic post) {
+    final thumbnailUrl = post['images']?.isNotEmpty == true
+        ? post['images'][0]['url']
+        : 'https://via.placeholder.com/150';
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Thumbnail on left
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                image: DecorationImage(
+                  image: NetworkImage(thumbnailUrl),
+                  fit: BoxFit.fill, // FitXY equivalent
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // Title and description on right
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    post['title'],
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF333333),
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _extractPlainText(post['content']),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF666666),
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      _formatDateTime(post['published']),
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Color(0xFF888888),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _extractPlainText(String htmlString) {
+    // Simple HTML to plain text conversion
+    return htmlString
+        .replaceAll(RegExp(r'<[^>]*>'), '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
+  Widget _buildLoadMoreButton() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: Colors.white,
+      child: ElevatedButton(
+        onPressed: () => _loadPosts(loadMore: true),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF4289CE),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(4),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+        ),
+        child: _isLoading
+            ? const SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(
+            color: Colors.white,
+            strokeWidth: 2,
+          ),
+        )
+            : const Text(
+          'আরও দেখুন',
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: const Color(0xFF4289CE),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications, color: Colors.white),
-            onPressed: () {},
-          ),
-        ],
       ),
-      body: _pages[_currentIndex],
-      bottomNavigationBar: _buildBottomNavigationBar(),
     );
+  }
+
+  String _formatDateTime(String dateString) {
+    try {
+      final date = DateTime.parse(dateString);
+      return DateFormat('dd MMM yyyy, hh:mm a').format(date);
+    } catch (e) {
+      return dateString;
+    }
   }
 
   Widget _buildBottomNavigationBar() {
@@ -64,115 +346,13 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class HomeTab extends StatelessWidget {
-  const HomeTab({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Welcome to Examplay!',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF333333),
-            ),
-          ),
-          const SizedBox(height: 20),
-          _buildFeatureCard(
-            icon: Icons.quiz,
-            color: const Color(0xFF2DBBBF),
-            title: 'Practice Tests',
-            subtitle: 'Take practice tests to improve your skills',
-          ),
-          const SizedBox(height: 16),
-          _buildFeatureCard(
-            icon: Icons.analytics,
-            color: const Color(0xFFF7953E),
-            title: 'Performance Analysis',
-            subtitle: 'Track your progress and identify weak areas',
-          ),
-          const SizedBox(height: 16),
-          _buildFeatureCard(
-            icon: Icons.video_library,
-            color: const Color(0xFFF15B38),
-            title: 'Video Lessons',
-            subtitle: 'Learn from expert instructors',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFeatureCard({
-    required IconData icon,
-    required Color color,
-    required String title,
-    required String subtitle,
-  }) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withAlpha(50),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: color, size: 30),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF333333),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF888888),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right, color: Color(0xFF888888)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class StudyTab extends StatelessWidget {
   const StudyTab({super.key});
 
   @override
   Widget build(BuildContext context) {
     return const Center(
-      child: Text(
-        'Study Materials Coming Soon',
-        style: TextStyle(fontSize: 18, color: Color(0xFF888888)),
-      ),
+      child: Text('Study Materials Coming Soon'),
     );
   }
 }
@@ -183,10 +363,7 @@ class ProfileTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Center(
-      child: Text(
-        'Profile Section Coming Soon',
-        style: TextStyle(fontSize: 18, color: Color(0xFF888888)),
-      ),
+      child: Text('Profile Section Coming Soon'),
     );
   }
 }
