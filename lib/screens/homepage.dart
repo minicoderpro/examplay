@@ -14,21 +14,43 @@ class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
   final BloggerService _bloggerService = BloggerService();
   List<dynamic> _posts = [];
+  List<dynamic> _filteredPosts = [];
   String? _nextPageToken;
   bool _isLoading = false;
+  bool _showLoadMore = false;
   final PageController _sliderController = PageController();
   final TextEditingController _searchController = TextEditingController();
+  bool _isGridView = false;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _loadPosts();
+    _scrollController.addListener(_scrollListener);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
+      setState(() {
+        _showLoadMore = true;
+      });
+    }
   }
 
   Future<void> _loadPosts({bool loadMore = false}) async {
     if (_isLoading) return;
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _showLoadMore = false;
+    });
 
     try {
       final data = await _bloggerService.fetchPosts(
@@ -39,8 +61,10 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         if (loadMore) {
           _posts.addAll(data['items']);
+          _filteredPosts.addAll(data['items']);
         } else {
           _posts = data['items'];
+          _filteredPosts = data['items'];
         }
         _nextPageToken = data['nextPageToken'];
       });
@@ -51,6 +75,17 @@ class _HomePageState extends State<HomePage> {
     } finally {
       setState(() => _isLoading = false);
     }
+  }
+
+  void _filterPosts(String query) {
+    setState(() {
+      _filteredPosts = _posts.where((post) {
+        final title = post['title'].toString().toLowerCase();
+        final content = post['content'].toString().toLowerCase();
+        return title.contains(query.toLowerCase()) ||
+            content.contains(query.toLowerCase());
+      }).toList();
+    });
   }
 
   @override
@@ -70,7 +105,8 @@ class _HomePageState extends State<HomePage> {
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (_nextPageToken != null && _currentIndex == 0) _buildLoadMoreButton(),
+          if (_showLoadMore && _nextPageToken != null && _currentIndex == 0)
+            _buildLoadMoreButton(),
           _buildBottomNavigationBar(),
         ],
       ),
@@ -94,33 +130,46 @@ class _HomePageState extends State<HomePage> {
     return Column(
       children: [
         // Image Slider at the top
-        if (_posts.isNotEmpty) _buildImageSlider(),
+        if (_filteredPosts.isNotEmpty) _buildImageSlider(),
 
-        // Search Bar
+        // Search Bar with View Toggle
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              hintText: 'Search posts...',
-              prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(30),
-                borderSide: const BorderSide(color: Color(0xFFDDDDDD)),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search posts...',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: const BorderSide(color: Color(0xFFDDDDDD)),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                  ),
+                  onChanged: _filterPosts,
+                ),
               ),
-              contentPadding: const EdgeInsets.symmetric(vertical: 0),
-            ),
-            onChanged: (value) {
-              // Implement search functionality here
-            },
+              const SizedBox(width: 8),
+              IconButton(
+                icon: Icon(_isGridView ? Icons.list : Icons.grid_view),
+                onPressed: () {
+                  setState(() {
+                    _isGridView = !_isGridView;
+                  });
+                },
+              ),
+            ],
           ),
         ),
 
-        // Posts List
+        // Posts List/Grid
         Expanded(
           child: RefreshIndicator(
             onRefresh: () => _loadPosts(loadMore: false),
-            child: _buildPostList(),
+            child: _isGridView ? _buildPostGrid() : _buildPostList(),
           ),
         ),
       ],
@@ -128,10 +177,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildImageSlider() {
-    final featuredPosts = _posts.length > 5 ? _posts.sublist(0, 5) : _posts;
+    final featuredPosts = _filteredPosts.length > 5
+        ? _filteredPosts.sublist(0, 5)
+        : _filteredPosts;
 
     return SizedBox(
-      height: 180,
+      height: 220,
       child: Stack(
         children: [
           PageView.builder(
@@ -148,24 +199,76 @@ class _HomePageState extends State<HomePage> {
                   : 'https://via.placeholder.com/400x180';
 
               return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 8),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    imageUrl,
-                    fit: BoxFit.fill,
-                    width: double.infinity,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.error),
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: double.infinity,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: Colors.grey[300],
+                          child: const Icon(Icons.error),
+                        ),
+                      ),
                     ),
-                  ),
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          borderRadius: const BorderRadius.only(
+                            bottomLeft: Radius.circular(8),
+                            bottomRight: Radius.circular(8),
+                          ),
+                          gradient: LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            colors: [
+                              Colors.black.withOpacity(0.8),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              post['title'],
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _extractPlainText(post['content']),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white.withOpacity(0.9),
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               );
             },
           ),
           Positioned(
-            bottom: 10,
+            bottom: 20,
             left: 0,
             right: 0,
             child: Center(
@@ -188,10 +291,28 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildPostList() {
     return ListView.builder(
-      padding: const EdgeInsets.only(top: 8),
-      itemCount: _posts.length,
+      controller: _scrollController,
+      padding: const EdgeInsets.only(top: 8, bottom: 8),
+      itemCount: _filteredPosts.length,
       itemBuilder: (context, index) {
-        return _buildPostListItem(_posts[index]);
+        return _buildPostListItem(_filteredPosts[index]);
+      },
+    );
+  }
+
+  Widget _buildPostGrid() {
+    return GridView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.all(8),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.8,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+      ),
+      itemCount: _filteredPosts.length,
+      itemBuilder: (context, index) {
+        return _buildPostGridItem(_filteredPosts[index]);
       },
     );
   }
@@ -220,7 +341,7 @@ class _HomePageState extends State<HomePage> {
                 borderRadius: BorderRadius.circular(4),
                 image: DecorationImage(
                   image: NetworkImage(thumbnailUrl),
-                  fit: BoxFit.fill, // FitXY equivalent
+                  fit: BoxFit.fill,
                 ),
               ),
             ),
@@ -271,12 +392,64 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  String _extractPlainText(String htmlString) {
-    // Simple HTML to plain text conversion
-    return htmlString
-        .replaceAll(RegExp(r'<[^>]*>'), '')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
+  Widget _buildPostGridItem(dynamic post) {
+    final thumbnailUrl = post['images']?.isNotEmpty == true
+        ? post['images'][0]['url']
+        : 'https://via.placeholder.com/150';
+
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Thumbnail
+          Expanded(
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+              child: Image.network(
+                thumbnailUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: Colors.grey[300],
+                  child: const Icon(Icons.error),
+                ),
+              ),
+            ),
+          ),
+
+          // Title and date
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  post['title'],
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF333333),
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _formatDateTime(post['published']),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Color(0xFF888888),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildLoadMoreButton() {
@@ -311,6 +484,13 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
+  }
+
+  String _extractPlainText(String htmlString) {
+    return htmlString
+        .replaceAll(RegExp(r'<[^>]*>'), '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
   }
 
   String _formatDateTime(String dateString) {
