@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:examplay/services/blogger_service.dart';
 import 'package:examplay/widgets/image_slider.dart';
 import 'package:examplay/widgets/search_bar.dart';
 import 'package:examplay/widgets/post_card.dart';
@@ -6,7 +7,6 @@ import 'package:examplay/widgets/post_grid_item.dart';
 import 'package:examplay/widgets/load_more_button.dart';
 import 'package:examplay/screens/categories_tab.dart';
 import 'package:examplay/screens/developer_tab.dart';
-import 'package:examplay/services/blogger_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
