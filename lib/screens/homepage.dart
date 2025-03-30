@@ -242,7 +242,7 @@ class _HomePageState extends State<HomePage> {
           label: 'Home',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.book),
+          icon: Icon(Icons.category),
           label: 'Categories',
         ),
         BottomNavigationBarItem(

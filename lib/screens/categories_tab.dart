@@ -15,6 +15,7 @@ class _CategoriesTabState extends State<CategoriesTab> {
   List<Map<String, dynamic>> _categories = [];
   bool _isLoading = false;
   String? _errorMessage;
+  bool _isGridView = true; // Default to grid view
 
   @override
   void initState() {
@@ -63,57 +64,139 @@ class _CategoriesTabState extends State<CategoriesTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage != null
-          ? Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(_errorMessage!),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loadCategories,
-              child: const Text('Retry'),
+      body: Column(
+        children: [
+          // View Toggle Button
+          Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: ResponsiveHelper.responsiveValue(
+                context,
+                mobile: 16,
+                tablet: 24,
+                desktop: 32,
+              ),
+              vertical: ResponsiveHelper.responsiveValue(
+                context,
+                mobile: 8,
+                tablet: 12,
+                desktop: 16,
+              ),
             ),
-          ],
-        ),
-      )
-          : _categories.isEmpty
-          ? const Center(child: Text('No categories available'))
-          : Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).padding.bottom,
-        ),
-        child: GridView.builder(
-          padding: const EdgeInsets.all(16),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: ResponsiveHelper.responsiveGridCount(
-              context,
-              mobile: 2,
-              tablet: 3,
-              desktop: 4,
-            ),
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: ResponsiveHelper.responsiveValue(
-              context,
-              mobile: 0.9,
-              tablet: 1.0,
-              desktop: 1.1,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                IconButton(
+                  icon: Icon(
+                    _isGridView ? Icons.list : Icons.grid_view,
+                    color: const Color(0xFF4289CE),
+                    size: ResponsiveHelper.responsiveValue(
+                      context,
+                      mobile: 24,
+                      tablet: 28,
+                      desktop: 32,
+                    ),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _isGridView = !_isGridView;
+                    });
+                  },
+                  tooltip: _isGridView ? 'List View' : 'Grid View',
+                ),
+              ],
             ),
           ),
-          itemCount: _categories.length,
-          itemBuilder: (context, index) {
-            final category = _categories[index];
-            return _CategoryCard(
-              name: category['name'] ?? 'Uncategorized',
-              postCount: (category['postCount'] ?? 0) as int,
-              onTap: () => _handleCategoryTap(context, category['name'] ?? ''),
-            );
-          },
+          // Main Content
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _errorMessage != null
+                ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(_errorMessage!),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _loadCategories,
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            )
+                : _categories.isEmpty
+                ? const Center(child: Text('No categories available'))
+                : Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).padding.bottom,
+                left: ResponsiveHelper.responsiveValue(
+                  context,
+                  mobile: 8,
+                  tablet: 12,
+                  desktop: 16,
+                ),
+                right: ResponsiveHelper.responsiveValue(
+                  context,
+                  mobile: 8,
+                  tablet: 12,
+                  desktop: 16,
+                ),
+              ),
+              child: _isGridView
+                  ? _buildGridView()
+                  : _buildListView(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGridView() {
+    return GridView.builder(
+      padding: const EdgeInsets.all(8),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: ResponsiveHelper.responsiveGridCount(
+          context,
+          mobile: 2,
+          tablet: 3,
+          desktop: 4,
+        ),
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: ResponsiveHelper.responsiveValue(
+          context,
+          mobile: 0.9,
+          tablet: 1.0,
+          desktop: 1.1,
         ),
       ),
+      itemCount: _categories.length,
+      itemBuilder: (context, index) {
+        final category = _categories[index];
+        return _CategoryCard(
+          name: category['name'] ?? 'Uncategorized',
+          postCount: (category['postCount'] ?? 0) as int,
+          onTap: () => _handleCategoryTap(context, category['name'] ?? ''),
+          isGridView: true,
+        );
+      },
+    );
+  }
+
+  Widget _buildListView() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(8),
+      itemCount: _categories.length,
+      itemBuilder: (context, index) {
+        final category = _categories[index];
+        return _CategoryCard(
+          name: category['name'] ?? 'Uncategorized',
+          postCount: (category['postCount'] ?? 0) as int,
+          onTap: () => _handleCategoryTap(context, category['name'] ?? ''),
+          isGridView: false,
+        );
+      },
     );
   }
 }
@@ -122,17 +205,18 @@ class _CategoryCard extends StatelessWidget {
   final String name;
   final int postCount;
   final VoidCallback onTap;
+  final bool isGridView;
 
   const _CategoryCard({
     required this.name,
     required this.postCount,
     required this.onTap,
+    this.isGridView = true,
   });
 
   @override
   Widget build(BuildContext context) {
     final color = _getCategoryColor(name);
-    ResponsiveHelper.isMobile(context);
 
     return Card(
       elevation: 2,
@@ -146,60 +230,142 @@ class _CategoryCard extends StatelessWidget {
           padding: EdgeInsets.all(
             ResponsiveHelper.responsiveValue(
               context,
-              mobile: 12,
-              tablet: 16,
-              desktop: 20,
+              mobile: isGridView ? 12 : 16,
+              tablet: isGridView ? 16 : 20,
+              desktop: isGridView ? 20 : 24,
             ),
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: EdgeInsets.all(
-                  ResponsiveHelper.responsiveValue(
-                    context,
-                    mobile: 8,
-                    tablet: 12,
-                    desktop: 16,
-                  ),
-                ),
-                decoration: BoxDecoration(
-                  color: color.withAlpha(51),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  _getCategoryIcon(name),
-                  size: ResponsiveHelper.responsiveValue(
-                    context,
-                    mobile: 24,
-                    tablet: 28,
-                    desktop: 32,
-                  ),
-                  color: color,
-                ),
-              ),
-              SizedBox(height: ResponsiveHelper.responsiveValue(
+          child: isGridView
+              ? _buildGridLayout(context, color)
+              : _buildListLayout(context, color),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGridLayout(BuildContext context, Color color) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          padding: EdgeInsets.all(
+            ResponsiveHelper.responsiveValue(
+              context,
+              mobile: 8,
+              tablet: 12,
+              desktop: 16,
+            ),
+          ),
+          decoration: BoxDecoration(
+            color: color.withAlpha(51),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            _getCategoryIcon(name),
+            size: ResponsiveHelper.responsiveValue(
+              context,
+              mobile: 24,
+              tablet: 28,
+              desktop: 32,
+            ),
+            color: color,
+          ),
+        ),
+        SizedBox(height: ResponsiveHelper.responsiveValue(
+          context,
+          mobile: 12,
+          tablet: 16,
+          desktop: 20,
+        )),
+        Flexible(
+          child: Text(
+            name,
+            style: TextStyle(
+              fontSize: ResponsiveHelper.responsiveValue(
                 context,
-                mobile: 12,
+                mobile: 14,
                 tablet: 16,
-                desktop: 20,
-              )),
-              Flexible(
-                child: Text(
-                  name,
-                  style: TextStyle(
-                    fontSize: ResponsiveHelper.responsiveValue(
-                      context,
-                      mobile: 14,
-                      tablet: 16,
-                      desktop: 18,
-                    ),
-                    fontWeight: FontWeight.bold,
+                desktop: 18,
+              ),
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        SizedBox(height: ResponsiveHelper.responsiveValue(
+          context,
+          mobile: 4,
+          tablet: 6,
+          desktop: 8,
+        )),
+        Text(
+          '$postCount posts',
+          style: TextStyle(
+            fontSize: ResponsiveHelper.responsiveValue(
+              context,
+              mobile: 12,
+              tablet: 14,
+              desktop: 16,
+            ),
+            color: Colors.grey[600],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildListLayout(BuildContext context, Color color) {
+    return Row(
+      children: [
+        Container(
+          padding: EdgeInsets.all(
+            ResponsiveHelper.responsiveValue(
+              context,
+              mobile: 8,
+              tablet: 12,
+              desktop: 16,
+            ),
+          ),
+          decoration: BoxDecoration(
+            color: color.withAlpha(51),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            _getCategoryIcon(name),
+            size: ResponsiveHelper.responsiveValue(
+              context,
+              mobile: 24,
+              tablet: 28,
+              desktop: 32,
+            ),
+            color: color,
+          ),
+        ),
+        SizedBox(width: ResponsiveHelper.responsiveValue(
+          context,
+          mobile: 12,
+          tablet: 16,
+          desktop: 20,
+        )),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                name,
+                style: TextStyle(
+                  fontSize: ResponsiveHelper.responsiveValue(
+                    context,
+                    mobile: 16,
+                    tablet: 18,
+                    desktop: 20,
                   ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                  fontWeight: FontWeight.bold,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               SizedBox(height: ResponsiveHelper.responsiveValue(
                 context,
@@ -212,9 +378,9 @@ class _CategoryCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: ResponsiveHelper.responsiveValue(
                     context,
-                    mobile: 12,
-                    tablet: 14,
-                    desktop: 16,
+                    mobile: 14,
+                    tablet: 16,
+                    desktop: 18,
                   ),
                   color: Colors.grey[600],
                 ),
@@ -222,7 +388,7 @@ class _CategoryCard extends StatelessWidget {
             ],
           ),
         ),
-      ),
+      ],
     );
   }
 
@@ -240,12 +406,12 @@ class _CategoryCard extends StatelessWidget {
 
   IconData _getCategoryIcon(String categoryName) {
     final lowerName = categoryName.toLowerCase();
-    if (lowerName.contains('univ')) return Icons.school;
-    if (lowerName.contains('med')) return Icons.medical_services;
-    if (lowerName.contains('eng')) return Icons.engineering;
-    if (lowerName.contains('bank')) return Icons.account_balance;
-    if (lowerName.contains('bcs')) return Icons.gavel;
-    if (lowerName.contains('job')) return Icons.work;
+    if (lowerName.contains('বি. সি. এস.')) return Icons.gavel;
+    if (lowerName.contains('নার্স')) return Icons.medical_services;
+    if (lowerName.contains('ইঞ্জি')) return Icons.engineering;
+    if (lowerName.contains('ব্যাংক')) return Icons.account_balance;
+    if (lowerName.contains('বিদ্যালয়')) return Icons.school;
+    if (lowerName.contains('চাকরি')) return Icons.work;
     return Icons.category;
   }
 }

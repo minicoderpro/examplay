@@ -104,8 +104,8 @@ class _ImageSliderState extends State<ImageSlider> {
                               begin: Alignment.bottomCenter,
                               end: Alignment.topCenter,
                               colors: [
-                                Colors.yellow.withAlpha(204),
-                                Colors.green.withAlpha(0),
+                                Colors.black.withAlpha(204),
+                                Colors.transparent,
                               ],
                             ),
                           ),
