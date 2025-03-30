@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:examplay/services/blogger_service.dart';
 import 'package:examplay/widgets/post_detail_view.dart';
 import '../utils/responsive_helper.dart';
+import '../widgets/load_more_button.dart';
 
 class CategoryPostsScreen extends StatefulWidget {
   final String category;
@@ -16,25 +17,54 @@ class _CategoryPostsScreenState extends State<CategoryPostsScreen> {
   final BloggerService _bloggerService = BloggerService();
   List<dynamic> _posts = [];
   bool _isLoading = false;
+  bool _isLoadingMore = false;
   String? _errorMessage;
+  String? _nextPageToken;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _loadPosts();
+    _scrollController.addListener(_scrollListener);
   }
 
-  Future<void> _loadPosts() async {
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
+      if (_nextPageToken != null && !_isLoadingMore) {
+        _loadPosts(loadMore: true);
+      }
+    }
+  }
+
+  Future<void> _loadPosts({bool loadMore = false}) async {
+    if (loadMore ? _isLoadingMore : _isLoading) return;
+
     setState(() {
-      _isLoading = true;
+      loadMore ? _isLoadingMore = true : _isLoading = true;
       _errorMessage = null;
     });
 
     try {
-      final data = await _bloggerService.fetchPostsByCategory(widget.category);
+      final data = await _bloggerService.fetchPostsByCategory(
+        widget.category,
+        pageToken: loadMore ? _nextPageToken : null,
+      );
+
       if (mounted) {
         setState(() {
-          _posts = data['items'] ?? [];
+          if (loadMore) {
+            _posts.addAll(data['items'] ?? []);
+          } else {
+            _posts = data['items'] ?? [];
+          }
+          _nextPageToken = data['nextPageToken'];
         });
       }
     } catch (e) {
@@ -46,7 +76,7 @@ class _CategoryPostsScreenState extends State<CategoryPostsScreen> {
     } finally {
       if (mounted) {
         setState(() {
-          _isLoading = false;
+          loadMore ? _isLoadingMore = false : _isLoading = false;
         });
       }
     }
@@ -64,116 +94,163 @@ class _CategoryPostsScreenState extends State<CategoryPostsScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage != null
-          ? Center(child: Text(_errorMessage!))
-          : _posts.isEmpty
-          ? Center(child: Text('No posts in ${widget.category}'))
-          : ListView.builder(
-        padding: EdgeInsets.all(
-          ResponsiveHelper.responsiveValue(
-            context,
-            mobile: 16,
-            tablet: 24,
-            desktop: 32,
-          ),
-        ),
-        itemCount: _posts.length,
-        itemBuilder: (context, index) {
-          final post = _posts[index];
-          final thumbnailUrl = post['images']?.isNotEmpty == true
-              ? post['images'][0]['url']
-              : 'https://via.placeholder.com/150';
-
-          return Card(
-            margin: EdgeInsets.only(
-              bottom: ResponsiveHelper.responsiveValue(
-                context,
-                mobile: 16,
-                tablet: 20,
-                desktop: 24,
-              ),
-            ),
-            child: InkWell(
-              onTap: () => _showPostDetail(context, post),
-              child: Padding(
-                padding: EdgeInsets.all(
-                  ResponsiveHelper.responsiveValue(
-                    context,
-                    mobile: 12,
-                    tablet: 16,
-                    desktop: 20,
-                  ),
+      body: Column(
+        children: [
+          Expanded(
+            child: _isLoading && !_isLoadingMore
+                ? const Center(child: CircularProgressIndicator())
+                : _errorMessage != null
+                ? Center(child: Text(_errorMessage!))
+                : _posts.isEmpty
+                ? Center(child: Text('No posts in ${widget.category}'))
+                : ListView.builder(
+              controller: _scrollController,
+              padding: EdgeInsets.all(
+                ResponsiveHelper.responsiveValue(
+                  context,
+                  mobile: 16,
+                  tablet: 24,
+                  desktop: 32,
                 ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: ResponsiveHelper.responsiveValue(
-                        context,
-                        mobile: 80,
-                        tablet: 100,
-                        desktop: 120,
-                      ),
-                      height: ResponsiveHelper.responsiveValue(
-                        context,
-                        mobile: 80,
-                        tablet: 100,
-                        desktop: 120,
-                      ),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        image: DecorationImage(
-                          image: NetworkImage(thumbnailUrl),
-                          fit: BoxFit.cover,
+              ),
+              itemCount: _posts.length,
+              itemBuilder: (context, index) {
+                final post = _posts[index];
+                final thumbnailUrl = post['images']?.isNotEmpty == true
+                    ? post['images'][0]['url']
+                    : 'https://via.placeholder.com/150';
+
+                return Card(
+                  margin: EdgeInsets.only(
+                    bottom: ResponsiveHelper.responsiveValue(
+                      context,
+                      mobile: 16,
+                      tablet: 20,
+                      desktop: 24,
+                    ),
+                  ),
+                  child: InkWell(
+                    onTap: () => _showPostDetail(context, post),
+                    child: Padding(
+                      padding: EdgeInsets.all(
+                        ResponsiveHelper.responsiveValue(
+                          context,
+                          mobile: 12,
+                          tablet: 16,
+                          desktop: 20,
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            post['title'] ?? 'No title',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                          Container(
+                            width: ResponsiveHelper.responsiveValue(
+                              context,
+                              mobile: 80,
+                              tablet: 100,
+                              desktop: 120,
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _extractPlainText(post['content'] ?? ''),
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey,
+                            height: ResponsiveHelper.responsiveValue(
+                              context,
+                              mobile: 80,
+                              tablet: 100,
+                              desktop: 120,
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 8),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: Text(
-                              _formatDate(post['published'] ?? ''),
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              image: DecorationImage(
+                                image: NetworkImage(thumbnailUrl),
+                                fit: BoxFit.cover,
                               ),
+                            ),
+                          ),
+                          SizedBox(width: ResponsiveHelper.responsiveValue(
+                            context,
+                            mobile: 12,
+                            tablet: 16,
+                            desktop: 20,
+                          )),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  post['title'] ?? 'No title',
+                                  style: TextStyle(
+                                    fontSize: ResponsiveHelper.responsiveValue(
+                                      context,
+                                      mobile: 16,
+                                      tablet: 18,
+                                      desktop: 20,
+                                    ),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                SizedBox(height: ResponsiveHelper.responsiveValue(
+                                  context,
+                                  mobile: 8,
+                                  tablet: 10,
+                                  desktop: 12,
+                                )),
+                                Text(
+                                  _extractPlainText(post['content'] ?? ''),
+                                  style: TextStyle(
+                                    fontSize: ResponsiveHelper.responsiveValue(
+                                      context,
+                                      mobile: 14,
+                                      tablet: 16,
+                                      desktop: 18,
+                                    ),
+                                    color: Colors.grey,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                SizedBox(height: ResponsiveHelper.responsiveValue(
+                                  context,
+                                  mobile: 8,
+                                  tablet: 10,
+                                  desktop: 12,
+                                )),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Text(
+                                    _formatDate(post['published'] ?? ''),
+                                    style: TextStyle(
+                                      fontSize: ResponsiveHelper.responsiveValue(
+                                        context,
+                                        mobile: 12,
+                                        tablet: 14,
+                                        desktop: 16,
+                                      ),
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             ),
-          );
-        },
+          ),
+          if (_nextPageToken != null && _isLoadingMore)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 8.0),
+              child: CircularProgressIndicator(),
+            ),
+          if (_nextPageToken != null && !_isLoadingMore && !_isLoading)
+            LoadMoreButton(
+              isLoading: false,
+              onPressed: () => _loadPosts(loadMore: true),
+            ),
+        ],
       ),
     );
   }
