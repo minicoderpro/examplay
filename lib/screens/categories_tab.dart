@@ -62,7 +62,6 @@ class _CategoriesTabState extends State<CategoriesTab> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -82,33 +81,38 @@ class _CategoriesTabState extends State<CategoriesTab> {
       )
           : _categories.isEmpty
           ? const Center(child: Text('No categories available'))
-          : GridView.builder(
-        padding: const EdgeInsets.all(16),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: ResponsiveHelper.responsiveGridCount(
-            context,
-            mobile: 2,
-            tablet: 3,
-            desktop: 4,
-          ),
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: ResponsiveHelper.responsiveValue(
-            context,
-            mobile: 0.9,
-            tablet: 1.0,
-            desktop: 1.1,
-          ),
+          : Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).padding.bottom,
         ),
-        itemCount: _categories.length,
-        itemBuilder: (context, index) {
-          final category = _categories[index];
-          return _CategoryCard(
-            name: category['name'] ?? 'Uncategorized',
-            postCount: (category['postCount'] ?? 0) as int,
-            onTap: () => _handleCategoryTap(context, category['name'] ?? ''),
-          );
-        },
+        child: GridView.builder(
+          padding: const EdgeInsets.all(16),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: ResponsiveHelper.responsiveGridCount(
+              context,
+              mobile: 2,
+              tablet: 3,
+              desktop: 4,
+            ),
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: ResponsiveHelper.responsiveValue(
+              context,
+              mobile: 0.9,
+              tablet: 1.0,
+              desktop: 1.1,
+            ),
+          ),
+          itemCount: _categories.length,
+          itemBuilder: (context, index) {
+            final category = _categories[index];
+            return _CategoryCard(
+              name: category['name'] ?? 'Uncategorized',
+              postCount: (category['postCount'] ?? 0) as int,
+              onTap: () => _handleCategoryTap(context, category['name'] ?? ''),
+            );
+          },
+        ),
       ),
     );
   }
@@ -128,6 +132,7 @@ class _CategoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _getCategoryColor(name);
+    ResponsiveHelper.isMobile(context);
 
     return Card(
       elevation: 2,
@@ -138,38 +143,79 @@ class _CategoryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(
+            ResponsiveHelper.responsiveValue(
+              context,
+              mobile: 12,
+              tablet: 16,
+              desktop: 20,
+            ),
+          ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.all(
+                  ResponsiveHelper.responsiveValue(
+                    context,
+                    mobile: 8,
+                    tablet: 12,
+                    desktop: 16,
+                  ),
+                ),
                 decoration: BoxDecoration(
                   color: color.withAlpha(51),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   _getCategoryIcon(name),
-                  size: 28,
+                  size: ResponsiveHelper.responsiveValue(
+                    context,
+                    mobile: 24,
+                    tablet: 28,
+                    desktop: 32,
+                  ),
                   color: color,
                 ),
               ),
-              const SizedBox(height: 16),
-              Text(
-                name,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+              SizedBox(height: ResponsiveHelper.responsiveValue(
+                context,
+                mobile: 12,
+                tablet: 16,
+                desktop: 20,
+              )),
+              Flexible(
+                child: Text(
+                  name,
+                  style: TextStyle(
+                    fontSize: ResponsiveHelper.responsiveValue(
+                      context,
+                      mobile: 14,
+                      tablet: 16,
+                      desktop: 18,
+                    ),
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: ResponsiveHelper.responsiveValue(
+                context,
+                mobile: 4,
+                tablet: 6,
+                desktop: 8,
+              )),
               Text(
                 '$postCount posts',
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: ResponsiveHelper.responsiveValue(
+                    context,
+                    mobile: 12,
+                    tablet: 14,
+                    desktop: 16,
+                  ),
                   color: Colors.grey[600],
                 ),
               ),

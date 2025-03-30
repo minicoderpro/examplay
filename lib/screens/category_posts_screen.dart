@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:examplay/services/blogger_service.dart';
 import 'package:examplay/widgets/post_detail_view.dart';
-
 import '../utils/responsive_helper.dart';
 
 class CategoryPostsScreen extends StatefulWidget {
