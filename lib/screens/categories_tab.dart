@@ -15,7 +15,7 @@ class _CategoriesTabState extends State<CategoriesTab> {
   List<Map<String, dynamic>> _categories = [];
   bool _isLoading = false;
   String? _errorMessage;
-  bool _isGridView = true; // Default to grid view
+  final List<bool> _viewSelection = [true, false]; // [List, Grid]
 
   @override
   void initState() {
@@ -66,47 +66,77 @@ class _CategoriesTabState extends State<CategoriesTab> {
     return Scaffold(
       body: Column(
         children: [
-          // View Toggle Button
           Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: ResponsiveHelper.responsiveValue(
-                context,
-                mobile: 16,
-                tablet: 24,
-                desktop: 32,
-              ),
-              vertical: ResponsiveHelper.responsiveValue(
-                context,
-                mobile: 8,
-                tablet: 12,
-                desktop: 16,
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                IconButton(
-                  icon: Icon(
-                    _isGridView ? Icons.list : Icons.grid_view,
-                    color: const Color(0xFF4289CE),
-                    size: ResponsiveHelper.responsiveValue(
-                      context,
-                      mobile: 24,
-                      tablet: 28,
-                      desktop: 32,
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            child: Center(
+              child: ToggleButtons(
+                isSelected: _viewSelection,
+                selectedColor: Colors.white,
+                fillColor: const Color(0xFF4289CE),
+                borderRadius: BorderRadius.circular(30),
+                constraints: BoxConstraints(
+                  minHeight: 40,
+                  minWidth: ResponsiveHelper.responsiveValue(
+                    context,
+                    mobile: 120,
+                    tablet: 140,
+                    desktop: 160,
+                  ),
+                ),
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        const Icon(Icons.list),
+                        const SizedBox(width: 8),
+                        Text(
+                          'লিস্ট ভিউ',
+                          style: TextStyle(
+                            fontSize: ResponsiveHelper.responsiveValue(
+                              context,
+                              mobile: 14,
+                              tablet: 16,
+                              desktop: 18,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  onPressed: () {
-                    setState(() {
-                      _isGridView = !_isGridView;
-                    });
-                  },
-                  tooltip: _isGridView ? 'List View' : 'Grid View',
-                ),
-              ],
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        const Icon(Icons.grid_view),
+                        const SizedBox(width: 8),
+                        Text(
+                          'গ্রিড ভিউ',
+                          style: TextStyle(
+                            fontSize: ResponsiveHelper.responsiveValue(
+                              context,
+                              mobile: 14,
+                              tablet: 16,
+                              desktop: 18,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                onPressed: (int index) {
+                  setState(() {
+                    for (int i = 0; i < _viewSelection.length; i++) {
+                      _viewSelection[i] = i == index;
+                    }
+                  });
+                },
+              ),
             ),
           ),
-          // Main Content
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -119,32 +149,20 @@ class _CategoriesTabState extends State<CategoriesTab> {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _loadCategories,
-                    child: const Text('Retry'),
+                    child: const Text('আবার চেষ্টা করুন'),
                   ),
                 ],
               ),
             )
                 : _categories.isEmpty
-                ? const Center(child: Text('No categories available'))
+                ? const Center(child: Text('কোন ক্যাটাগরি পাওয়া যায়নি'))
                 : Padding(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).padding.bottom,
-                left: ResponsiveHelper.responsiveValue(
-                  context,
-                  mobile: 8,
-                  tablet: 12,
-                  desktop: 16,
-                ),
-                right: ResponsiveHelper.responsiveValue(
-                  context,
-                  mobile: 8,
-                  tablet: 12,
-                  desktop: 16,
-                ),
+                left: 16,
+                right: 16,
               ),
-              child: _isGridView
-                  ? _buildGridView()
-                  : _buildListView(),
+              child: _viewSelection[0] ? _buildListView() : _buildGridView(),
             ),
           ),
         ],
@@ -154,7 +172,6 @@ class _CategoriesTabState extends State<CategoriesTab> {
 
   Widget _buildGridView() {
     return GridView.builder(
-      padding: const EdgeInsets.all(8),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: ResponsiveHelper.responsiveGridCount(
           context,
@@ -178,7 +195,6 @@ class _CategoriesTabState extends State<CategoriesTab> {
           name: category['name'] ?? 'Uncategorized',
           postCount: (category['postCount'] ?? 0) as int,
           onTap: () => _handleCategoryTap(context, category['name'] ?? ''),
-          isGridView: true,
         );
       },
     );
@@ -186,15 +202,13 @@ class _CategoriesTabState extends State<CategoriesTab> {
 
   Widget _buildListView() {
     return ListView.builder(
-      padding: const EdgeInsets.all(8),
       itemCount: _categories.length,
       itemBuilder: (context, index) {
         final category = _categories[index];
-        return _CategoryCard(
+        return _CategoryListCard(
           name: category['name'] ?? 'Uncategorized',
           postCount: (category['postCount'] ?? 0) as int,
           onTap: () => _handleCategoryTap(context, category['name'] ?? ''),
-          isGridView: false,
         );
       },
     );
@@ -205,13 +219,11 @@ class _CategoryCard extends StatelessWidget {
   final String name;
   final int postCount;
   final VoidCallback onTap;
-  final bool isGridView;
 
   const _CategoryCard({
     required this.name,
     required this.postCount,
     required this.onTap,
-    this.isGridView = true,
   });
 
   @override
@@ -230,142 +242,60 @@ class _CategoryCard extends StatelessWidget {
           padding: EdgeInsets.all(
             ResponsiveHelper.responsiveValue(
               context,
-              mobile: isGridView ? 12 : 16,
-              tablet: isGridView ? 16 : 20,
-              desktop: isGridView ? 20 : 24,
-            ),
-          ),
-          child: isGridView
-              ? _buildGridLayout(context, color)
-              : _buildListLayout(context, color),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGridLayout(BuildContext context, Color color) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          padding: EdgeInsets.all(
-            ResponsiveHelper.responsiveValue(
-              context,
-              mobile: 8,
-              tablet: 12,
-              desktop: 16,
-            ),
-          ),
-          decoration: BoxDecoration(
-            color: color.withAlpha(51),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            _getCategoryIcon(name),
-            size: ResponsiveHelper.responsiveValue(
-              context,
-              mobile: 24,
-              tablet: 28,
-              desktop: 32,
-            ),
-            color: color,
-          ),
-        ),
-        SizedBox(height: ResponsiveHelper.responsiveValue(
-          context,
-          mobile: 12,
-          tablet: 16,
-          desktop: 20,
-        )),
-        Flexible(
-          child: Text(
-            name,
-            style: TextStyle(
-              fontSize: ResponsiveHelper.responsiveValue(
-                context,
-                mobile: 14,
-                tablet: 16,
-                desktop: 18,
-              ),
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        SizedBox(height: ResponsiveHelper.responsiveValue(
-          context,
-          mobile: 4,
-          tablet: 6,
-          desktop: 8,
-        )),
-        Text(
-          '$postCount posts',
-          style: TextStyle(
-            fontSize: ResponsiveHelper.responsiveValue(
-              context,
               mobile: 12,
-              tablet: 14,
-              desktop: 16,
-            ),
-            color: Colors.grey[600],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildListLayout(BuildContext context, Color color) {
-    return Row(
-      children: [
-        Container(
-          padding: EdgeInsets.all(
-            ResponsiveHelper.responsiveValue(
-              context,
-              mobile: 8,
-              tablet: 12,
-              desktop: 16,
+              tablet: 16,
+              desktop: 20,
             ),
           ),
-          decoration: BoxDecoration(
-            color: color.withAlpha(51),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            _getCategoryIcon(name),
-            size: ResponsiveHelper.responsiveValue(
-              context,
-              mobile: 24,
-              tablet: 28,
-              desktop: 32,
-            ),
-            color: color,
-          ),
-        ),
-        SizedBox(width: ResponsiveHelper.responsiveValue(
-          context,
-          mobile: 12,
-          tablet: 16,
-          desktop: 20,
-        )),
-        Expanded(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                name,
-                style: TextStyle(
-                  fontSize: ResponsiveHelper.responsiveValue(
+              Container(
+                padding: EdgeInsets.all(
+                  ResponsiveHelper.responsiveValue(
                     context,
-                    mobile: 16,
-                    tablet: 18,
-                    desktop: 20,
+                    mobile: 8,
+                    tablet: 12,
+                    desktop: 16,
                   ),
-                  fontWeight: FontWeight.bold,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                decoration: BoxDecoration(
+                  color: color.withAlpha(51),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  _getCategoryIcon(name),
+                  size: ResponsiveHelper.responsiveValue(
+                    context,
+                    mobile: 24,
+                    tablet: 28,
+                    desktop: 32,
+                  ),
+                  color: color,
+                ),
+              ),
+              SizedBox(height: ResponsiveHelper.responsiveValue(
+                context,
+                mobile: 12,
+                tablet: 16,
+                desktop: 20,
+              )),
+              Flexible(
+                child: Text(
+                  name,
+                  style: TextStyle(
+                    fontSize: ResponsiveHelper.responsiveValue(
+                      context,
+                      mobile: 14,
+                      tablet: 16,
+                      desktop: 18,
+                    ),
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               SizedBox(height: ResponsiveHelper.responsiveValue(
                 context,
@@ -374,13 +304,13 @@ class _CategoryCard extends StatelessWidget {
                 desktop: 8,
               )),
               Text(
-                '$postCount posts',
+                '$postCount পোস্ট',
                 style: TextStyle(
                   fontSize: ResponsiveHelper.responsiveValue(
                     context,
-                    mobile: 14,
-                    tablet: 16,
-                    desktop: 18,
+                    mobile: 12,
+                    tablet: 14,
+                    desktop: 16,
                   ),
                   color: Colors.grey[600],
                 ),
@@ -388,7 +318,152 @@ class _CategoryCard extends StatelessWidget {
             ],
           ),
         ),
-      ],
+      ),
+    );
+  }
+
+  Color _getCategoryColor(String categoryName) {
+    final colors = [
+      const Color(0xFF4289CE),
+      const Color(0xFFF7953E),
+      const Color(0xFF2DBBBF),
+      const Color(0xFFF15B38),
+      const Color(0xFF8E44AD),
+      const Color(0xFF27AE60),
+    ];
+    return colors[categoryName.hashCode % colors.length];
+  }
+
+  IconData _getCategoryIcon(String categoryName) {
+    final lowerName = categoryName.toLowerCase();
+    if (lowerName.contains('বি. সি. এস.')) return Icons.gavel;
+    if (lowerName.contains('নার্স')) return Icons.medical_services;
+    if (lowerName.contains('ইঞ্জি')) return Icons.engineering;
+    if (lowerName.contains('ব্যাংক')) return Icons.account_balance;
+    if (lowerName.contains('বিদ্যালয়')) return Icons.school;
+    if (lowerName.contains('চাকরি')) return Icons.work;
+    return Icons.category;
+  }
+}
+
+class _CategoryListCard extends StatelessWidget {
+  final String name;
+  final int postCount;
+  final VoidCallback onTap;
+
+  const _CategoryListCard({
+    required this.name,
+    required this.postCount,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _getCategoryColor(name);
+
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: EdgeInsets.all(
+            ResponsiveHelper.responsiveValue(
+              context,
+              mobile: 16,
+              tablet: 20,
+              desktop: 24,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(
+                  ResponsiveHelper.responsiveValue(
+                    context,
+                    mobile: 8,
+                    tablet: 12,
+                    desktop: 16,
+                  ),
+                ),
+                decoration: BoxDecoration(
+                  color: color.withAlpha(51),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  _getCategoryIcon(name),
+                  size: ResponsiveHelper.responsiveValue(
+                    context,
+                    mobile: 24,
+                    tablet: 28,
+                    desktop: 32,
+                  ),
+                  color: color,
+                ),
+              ),
+              SizedBox(width: ResponsiveHelper.responsiveValue(
+                context,
+                mobile: 16,
+                tablet: 20,
+                desktop: 24,
+              )),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: TextStyle(
+                        fontSize: ResponsiveHelper.responsiveValue(
+                          context,
+                          mobile: 16,
+                          tablet: 18,
+                          desktop: 20,
+                        ),
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: ResponsiveHelper.responsiveValue(
+                      context,
+                      mobile: 4,
+                      tablet: 6,
+                      desktop: 8,
+                    )),
+                    Text(
+                      '$postCount পোস্ট',
+                      style: TextStyle(
+                        fontSize: ResponsiveHelper.responsiveValue(
+                          context,
+                          mobile: 14,
+                          tablet: 16,
+                          desktop: 18,
+                        ),
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                size: ResponsiveHelper.responsiveValue(
+                  context,
+                  mobile: 16,
+                  tablet: 18,
+                  desktop: 20,
+                ),
+                color: Colors.grey,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
