@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:examplay/services/blogger_service.dart';
 import 'package:examplay/widgets/post_detail_view.dart';
 
+import '../utils/responsive_helper.dart';
+
 class CategoryPostsScreen extends StatefulWidget {
   final String category;
 
@@ -70,7 +72,14 @@ class _CategoryPostsScreenState extends State<CategoryPostsScreen> {
           : _posts.isEmpty
           ? Center(child: Text('No posts in ${widget.category}'))
           : ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(
+          ResponsiveHelper.responsiveValue(
+            context,
+            mobile: 16,
+            tablet: 24,
+            desktop: 32,
+          ),
+        ),
         itemCount: _posts.length,
         itemBuilder: (context, index) {
           final post = _posts[index];
@@ -79,17 +88,41 @@ class _CategoryPostsScreenState extends State<CategoryPostsScreen> {
               : 'https://via.placeholder.com/150';
 
           return Card(
-            margin: const EdgeInsets.only(bottom: 16),
+            margin: EdgeInsets.only(
+              bottom: ResponsiveHelper.responsiveValue(
+                context,
+                mobile: 16,
+                tablet: 20,
+                desktop: 24,
+              ),
+            ),
             child: InkWell(
               onTap: () => _showPostDetail(context, post),
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.all(
+                  ResponsiveHelper.responsiveValue(
+                    context,
+                    mobile: 12,
+                    tablet: 16,
+                    desktop: 20,
+                  ),
+                ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      width: 80,
-                      height: 80,
+                      width: ResponsiveHelper.responsiveValue(
+                        context,
+                        mobile: 80,
+                        tablet: 100,
+                        desktop: 120,
+                      ),
+                      height: ResponsiveHelper.responsiveValue(
+                        context,
+                        mobile: 80,
+                        tablet: 100,
+                        desktop: 120,
+                      ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
                         image: DecorationImage(

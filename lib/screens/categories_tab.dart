@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:examplay/services/blogger_service.dart';
 import 'package:examplay/screens/category_posts_screen.dart';
+import 'package:examplay/utils/responsive_helper.dart';
 
 class CategoriesTab extends StatefulWidget {
   const CategoriesTab({super.key});
@@ -83,11 +84,21 @@ class _CategoriesTabState extends State<CategoriesTab> {
           ? const Center(child: Text('No categories available'))
           : GridView.builder(
         padding: const EdgeInsets.all(16),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: ResponsiveHelper.responsiveGridCount(
+            context,
+            mobile: 2,
+            tablet: 3,
+            desktop: 4,
+          ),
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
-          childAspectRatio: 0.9,
+          childAspectRatio: ResponsiveHelper.responsiveValue(
+            context,
+            mobile: 0.9,
+            tablet: 1.0,
+            desktop: 1.1,
+          ),
         ),
         itemCount: _categories.length,
         itemBuilder: (context, index) {

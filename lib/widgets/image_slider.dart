@@ -2,6 +2,8 @@ import 'package:examplay/widgets/post_detail_view.dart';
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
+import '../utils/responsive_helper.dart';
+
 class ImageSlider extends StatefulWidget {
   final List<dynamic> posts;
 
@@ -20,10 +22,16 @@ class _ImageSliderState extends State<ImageSlider> {
     super.dispose();
   }
 
+  // Update image_slider.dart
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 220,
+      height: ResponsiveHelper.responsiveValue(
+        context,
+        mobile: 220,
+        tablet: 280,
+        desktop: 320,
+      ),
       child: Stack(
         children: [
           PageView.builder(
@@ -37,7 +45,6 @@ class _ImageSliderState extends State<ImageSlider> {
 
               return GestureDetector(
                 onTap: () {
-                  // Navigate to PostDetailView when the image is tapped
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -46,7 +53,20 @@ class _ImageSliderState extends State<ImageSlider> {
                   );
                 },
                 child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  margin: EdgeInsets.symmetric(
+                    horizontal: ResponsiveHelper.responsiveValue(
+                      context,
+                      mobile: 16,
+                      tablet: 24,
+                      desktop: 32,
+                    ),
+                    vertical: ResponsiveHelper.responsiveValue(
+                      context,
+                      mobile: 8,
+                      tablet: 12,
+                      desktop: 16,
+                    ),
+                  ),
                   child: Stack(
                     children: [
                       ClipRRect(
@@ -67,7 +87,14 @@ class _ImageSliderState extends State<ImageSlider> {
                         left: 0,
                         right: 0,
                         child: Container(
-                          padding: const EdgeInsets.all(12),
+                          padding: EdgeInsets.all(
+                            ResponsiveHelper.responsiveValue(
+                              context,
+                              mobile: 12,
+                              tablet: 16,
+                              desktop: 20,
+                            ),
+                          ),
                           decoration: BoxDecoration(
                             borderRadius: const BorderRadius.only(
                               bottomLeft: Radius.circular(8),
@@ -77,8 +104,8 @@ class _ImageSliderState extends State<ImageSlider> {
                               begin: Alignment.bottomCenter,
                               end: Alignment.topCenter,
                               colors: [
-                                Colors.yellow.withAlpha(204), // Yellow
-                                Colors.green.withAlpha(0),    // Green
+                                Colors.yellow.withAlpha(204),
+                                Colors.green.withAlpha(0),
                               ],
                             ),
                           ),
@@ -87,20 +114,35 @@ class _ImageSliderState extends State<ImageSlider> {
                             children: [
                               Text(
                                 post['title'],
-                                style: const TextStyle(
-                                  fontSize: 16,
+                                style: TextStyle(
+                                  fontSize: ResponsiveHelper.responsiveValue(
+                                    context,
+                                    mobile: 16,
+                                    tablet: 18,
+                                    desktop: 20,
+                                  ),
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
                                 ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 4),
+                              SizedBox(height: ResponsiveHelper.responsiveValue(
+                                context,
+                                mobile: 4,
+                                tablet: 6,
+                                desktop: 8,
+                              )),
                               Text(
                                 _extractPlainText(post['content']),
                                 style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.white.withAlpha(229), // 90% opacity
+                                  fontSize: ResponsiveHelper.responsiveValue(
+                                    context,
+                                    mobile: 12,
+                                    tablet: 14,
+                                    desktop: 16,
+                                  ),
+                                  color: Colors.white.withAlpha(229),
                                 ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
@@ -116,7 +158,12 @@ class _ImageSliderState extends State<ImageSlider> {
             },
           ),
           Positioned(
-            bottom: 20,
+            bottom: ResponsiveHelper.responsiveValue(
+              context,
+              mobile: 20,
+              tablet: 24,
+              desktop: 28,
+            ),
             left: 0,
             right: 0,
             child: Center(

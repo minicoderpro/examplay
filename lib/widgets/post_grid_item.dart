@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../utils/responsive_helper.dart';
+
 class PostGridItem extends StatelessWidget {
   final dynamic post;
   final VoidCallback onTap;
@@ -12,6 +14,7 @@ class PostGridItem extends StatelessWidget {
 
   static void _defaultOnTap() {}
 
+  // Update post_grid_item.dart
   @override
   Widget build(BuildContext context) {
     final thumbnailUrl = post['images']?.isNotEmpty == true
@@ -43,16 +46,28 @@ class PostGridItem extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(
+                ResponsiveHelper.responsiveValue(
+                  context,
+                  mobile: 8,
+                  tablet: 12,
+                  desktop: 16,
+                ),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     post['title'],
-                    style: const TextStyle(
-                      fontSize: 14,
+                    style: TextStyle(
+                      fontSize: ResponsiveHelper.responsiveValue(
+                        context,
+                        mobile: 14,
+                        tablet: 16,
+                        desktop: 18,
+                      ),
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF333333),
+                      color: const Color(0xFF333333),
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -60,9 +75,14 @@ class PostGridItem extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     _formatDate(post['published']),
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: Color(0xFF888888),
+                    style: TextStyle(
+                      fontSize: ResponsiveHelper.responsiveValue(
+                        context,
+                        mobile: 10,
+                        tablet: 12,
+                        desktop: 14,
+                      ),
+                      color: const Color(0xFF888888),
                     ),
                   ),
                 ],

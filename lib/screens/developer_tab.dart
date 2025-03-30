@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../utils/responsive_helper.dart';
+
 class DeveloperTab extends StatelessWidget {
   const DeveloperTab({super.key});
 
@@ -8,43 +10,69 @@ class DeveloperTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(
+          ResponsiveHelper.responsiveValue(
+            context,
+            mobile: 16.0,
+            tablet: 24.0,
+            desktop: 32.0,
+          ),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const SizedBox(height: 20),
-            const CircleAvatar(
-              radius: 60,
-              backgroundImage: NetworkImage(
+            SizedBox(height: ResponsiveHelper.responsiveValue(
+              context,
+              mobile: 20,
+              tablet: 30,
+              desktop: 40,
+            )),
+            CircleAvatar(
+              radius: ResponsiveHelper.responsiveValue(
+                context,
+                mobile: 60,
+                tablet: 80,
+                desktop: 100,
+              ),
+              backgroundImage: const NetworkImage(
                 'https://via.placeholder.com/150',
               ),
             ),
-            const SizedBox(height: 20),
-            const Text(
+            SizedBox(height: ResponsiveHelper.responsiveValue(
+              context,
+              mobile: 20,
+              tablet: 24,
+              desktop: 28,
+            )),
+            Text(
               'Huzaifa Coder',
               style: TextStyle(
-                fontSize: 24,
+                fontSize: ResponsiveHelper.responsiveValue(
+                  context,
+                  mobile: 24,
+                  tablet: 28,
+                  desktop: 32,
+                ),
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF333333),
+                color: const Color(0xFF333333),
               ),
             ),
-            const SizedBox(height: 8),
-            const Text(
+            SizedBox(height: ResponsiveHelper.responsiveValue(
+              context,
+              mobile: 8,
+              tablet: 10,
+              desktop: 12,
+            )),
+            Text(
               'Flutter Developer',
               style: TextStyle(
-                fontSize: 16,
-                color: Color(0xFF666666),
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Divider(),
-            const SizedBox(height: 16),
-            const Text(
-              'Contact Developer',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF4289CE),
+                fontSize: ResponsiveHelper.responsiveValue(
+                  context,
+                  mobile: 16,
+                  tablet: 18,
+                  desktop: 20,
+                ),
+                color: const Color(0xFF666666),
               ),
             ),
             const SizedBox(height: 16),

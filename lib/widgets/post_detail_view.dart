@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 
+import '../utils/responsive_helper.dart';
+
 class PostDetailView extends StatelessWidget {
   final dynamic post;
 
@@ -14,10 +16,22 @@ class PostDetailView extends StatelessWidget {
           SliverAppBar(
             title: Text(
               post['title'] ?? 'No title',
-              style: Theme.of(context).textTheme.headlineSmall,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontSize: ResponsiveHelper.responsiveValue(
+                  context,
+                  mobile: 20,
+                  tablet: 24,
+                  desktop: 28,
+                ),
+              ),
             ),
             backgroundColor: const Color(0xFF4289CE),
-            expandedHeight: 200,
+            expandedHeight: ResponsiveHelper.responsiveValue(
+              context,
+              mobile: 200,
+              tablet: 300,
+              desktop: 400,
+            ),
             flexibleSpace: FlexibleSpaceBar(
               background: Image.network(
                 post['images']?.isNotEmpty == true
@@ -30,16 +44,47 @@ class PostDetailView extends StatelessWidget {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(
+                ResponsiveHelper.responsiveValue(
+                  context,
+                  mobile: 16,
+                  tablet: 24,
+                  desktop: 32,
+                ),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     post['title'] ?? 'No title',
-                    style: Theme.of(context).textTheme.headlineSmall,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontSize: ResponsiveHelper.responsiveValue(
+                        context,
+                        mobile: 20,
+                        tablet: 24,
+                        desktop: 28,
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 8),
-                  Html(data: post['content'] ?? 'No content'),
+                  SizedBox(height: ResponsiveHelper.responsiveValue(
+                    context,
+                    mobile: 8,
+                    tablet: 12,
+                    desktop: 16,
+                  )),
+                  Html(
+                    data: post['content'] ?? 'No content',
+                    style: {
+                      "body": Style(
+                        fontSize: FontSize(ResponsiveHelper.responsiveValue(
+                          context,
+                          mobile: 14,
+                          tablet: 16,
+                          desktop: 18,
+                        )),
+                      ),
+                    },
+                  ),
                 ],
               ),
             ),

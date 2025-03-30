@@ -7,6 +7,7 @@ import 'package:examplay/widgets/post_grid_item.dart';
 import 'package:examplay/widgets/load_more_button.dart';
 import 'package:examplay/screens/categories_tab.dart';
 import 'package:examplay/screens/developer_tab.dart';
+import '../utils/responsive_helper.dart';
 import '../widgets/post_detail_view.dart';
 
 class HomePage extends StatefulWidget {
@@ -145,7 +146,15 @@ class _HomePageState extends State<HomePage> {
     return Column(
       children: [
         if (_filteredPosts.isNotEmpty)
-          ImageSlider(posts: _filteredPosts.length > 5 ? _filteredPosts.sublist(0, 5) : _filteredPosts),
+    SizedBox(
+      height: ResponsiveHelper.responsiveValue(
+        context,
+        mobile: 220,
+        tablet: 280,
+        desktop: 320,
+      ),
+      child: ImageSlider(posts: _filteredPosts.length > 5 ? _filteredPosts.sublist(0, 5) : _filteredPosts),
+    ),
 
         SearchBarWithToggle(
           controller: _searchController,
@@ -190,9 +199,19 @@ class _HomePageState extends State<HomePage> {
     return GridView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.all(8),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.8,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: ResponsiveHelper.responsiveGridCount(
+          context,
+          mobile: 2,
+          tablet: 3,
+          desktop: 4,
+        ),
+        childAspectRatio: ResponsiveHelper.responsiveValue(
+          context,
+          mobile: 0.8,
+          tablet: 0.9,
+          desktop: 1.0,
+        ),
         crossAxisSpacing: 8,
         mainAxisSpacing: 8,
       ),

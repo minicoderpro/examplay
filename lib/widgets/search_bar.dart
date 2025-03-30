@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../utils/responsive_helper.dart';
+
 class SearchBarWithToggle extends StatelessWidget {
   final TextEditingController controller;
   final bool isGridView;
@@ -14,10 +16,24 @@ class SearchBarWithToggle extends StatelessWidget {
     required this.onTogglePressed,
   });
 
+  // Update search_bar.dart
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.symmetric(
+        horizontal: ResponsiveHelper.responsiveValue(
+          context,
+          mobile: 16,
+          tablet: 24,
+          desktop: 32,
+        ),
+        vertical: ResponsiveHelper.responsiveValue(
+          context,
+          mobile: 8,
+          tablet: 12,
+          desktop: 16,
+        ),
+      ),
       child: Row(
         children: [
           Expanded(
@@ -30,14 +46,40 @@ class SearchBarWithToggle extends StatelessWidget {
                   borderRadius: BorderRadius.circular(30),
                   borderSide: const BorderSide(color: Color(0xFFDDDDDD)),
                 ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                contentPadding: EdgeInsets.symmetric(
+                  vertical: ResponsiveHelper.responsiveValue(
+                    context,
+                    mobile: 0,
+                    tablet: 4,
+                    desktop: 8,
+                  ),
+                  horizontal: ResponsiveHelper.responsiveValue(
+                    context,
+                    mobile: 16,
+                    tablet: 20,
+                    desktop: 24,
+                  ),
+                ),
               ),
               onChanged: onChanged,
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: ResponsiveHelper.responsiveValue(
+            context,
+            mobile: 8,
+            tablet: 12,
+            desktop: 16,
+          )),
           IconButton(
-            icon: Icon(isGridView ? Icons.list : Icons.grid_view),
+            icon: Icon(
+              isGridView ? Icons.list : Icons.grid_view,
+              size: ResponsiveHelper.responsiveValue(
+                context,
+                mobile: 24,
+                tablet: 28,
+                desktop: 32,
+              ),
+            ),
             onPressed: onTogglePressed,
           ),
         ],
