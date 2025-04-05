@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-
 import '../utils/responsive_helper.dart';
 
 class DeveloperTab extends StatelessWidget {
@@ -9,6 +8,7 @@ class DeveloperTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         padding: EdgeInsets.all(
           ResponsiveHelper.responsiveValue(

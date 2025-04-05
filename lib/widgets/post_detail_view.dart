@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
-
 import '../utils/responsive_helper.dart';
 
 class PostDetailView extends StatelessWidget {
@@ -11,21 +10,18 @@ class PostDetailView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
             title: Text(
               post['title'] ?? 'No title',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontSize: ResponsiveHelper.responsiveValue(
-                  context,
-                  mobile: 20,
-                  tablet: 24,
-                  desktop: 28,
-                ),
+              style: const TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            backgroundColor: const Color(0xFF4289CE),
+            backgroundColor: Colors.white,
             expandedHeight: ResponsiveHelper.responsiveValue(
               context,
               mobile: 200,
@@ -41,6 +37,8 @@ class PostDetailView extends StatelessWidget {
               ),
             ),
             pinned: true,
+            iconTheme: const IconThemeData(color: Colors.black),
+            actionsIconTheme: const IconThemeData(color: Colors.black),
           ),
           SliverToBoxAdapter(
             child: Padding(
@@ -55,23 +53,6 @@ class PostDetailView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    post['title'] ?? 'No title',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontSize: ResponsiveHelper.responsiveValue(
-                        context,
-                        mobile: 20,
-                        tablet: 24,
-                        desktop: 28,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: ResponsiveHelper.responsiveValue(
-                    context,
-                    mobile: 8,
-                    tablet: 12,
-                    desktop: 16,
-                  )),
                   Html(
                     data: post['content'] ?? 'No content',
                     style: {

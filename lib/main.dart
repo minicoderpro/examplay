@@ -1,12 +1,11 @@
+import 'package:flutter/material.dart';
 import 'package:examplay/screens/homepage.dart';
 import 'package:examplay/utils/responsive_helper.dart';
-import 'package:flutter/material.dart';
 
 void main() {
   runApp(const ExamPlayApp());
 }
 
-// Update main.dart
 class ExamPlayApp extends StatelessWidget {
   const ExamPlayApp({super.key});
 
@@ -17,7 +16,17 @@ class ExamPlayApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        scaffoldBackgroundColor: const Color(0xFFF4F4F4),
+        scaffoldBackgroundColor: Colors.white,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+          elevation: 1,
+          iconTheme: IconThemeData(color: Colors.black),
+          titleTextStyle: TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         textTheme: TextTheme(
           headlineSmall: TextStyle(
             fontSize: ResponsiveHelper.responsiveValue(

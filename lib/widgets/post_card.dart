@@ -8,10 +8,8 @@ class PostCard extends StatelessWidget {
   const PostCard({
     super.key,
     required this.post,
-    this.onTap = _defaultOnTap,
+    required this.onTap,
   });
-
-  static void _defaultOnTap() {}
 
   @override
   Widget build(BuildContext context) {

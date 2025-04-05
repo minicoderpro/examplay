@@ -25,6 +25,8 @@ class _HomePageState extends State<HomePage> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _showSearchBar = false;
+  double _scaleFactor = 1.0;
+  final double _scaleThreshold = 1.2;
 
   @override
   void initState() {
@@ -41,8 +43,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _scrollListener() {
-    if (_scrollController.position.pixels ==
-        _scrollController.position.maxScrollExtent) {
+    if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
       if (_nextPageToken != null && !_isLoading) {
         _loadPosts(loadMore: true);
       }
@@ -52,9 +53,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _loadPosts({bool loadMore = false}) async {
     if (_isLoading) return;
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
       final data = await _bloggerService.fetchPosts(
@@ -92,8 +91,7 @@ class _HomePageState extends State<HomePage> {
       _filteredPosts = _posts.where((post) {
         final title = post['title'].toString().toLowerCase();
         final content = post['content'].toString().toLowerCase();
-        return title.contains(query.toLowerCase()) ||
-            content.contains(query.toLowerCase());
+        return title.contains(query.toLowerCase()) || content.contains(query.toLowerCase());
       }).toList();
     });
   }
@@ -101,6 +99,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: _showSearchBar
             ? TextField(
@@ -108,9 +107,10 @@ class _HomePageState extends State<HomePage> {
           autofocus: true,
           decoration: InputDecoration(
             hintText: 'Search posts...',
+            hintStyle: TextStyle(color: Colors.black54),
             border: InputBorder.none,
             suffixIcon: IconButton(
-              icon: const Icon(Icons.close),
+              icon: const Icon(Icons.close, color: Colors.black),
               onPressed: () {
                 setState(() {
                   _showSearchBar = false;
@@ -120,27 +120,79 @@ class _HomePageState extends State<HomePage> {
               },
             ),
           ),
+          style: const TextStyle(color: Colors.black),
+          cursorColor: Colors.black,
           onChanged: _filterPosts,
         )
-            : const Text('Examplay'),
-        backgroundColor: const Color(0xFF4289CE),
+            : const Text(
+          'Examplay',
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 1,
+        iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              setState(() {
-                _showSearchBar = true;
-              });
-            },
+            icon: const Icon(Icons.search, color: Colors.black),
+            onPressed: () => setState(() => _showSearchBar = true),
           ),
           IconButton(
-            icon: const Icon(Icons.notifications),
+            icon: const Icon(Icons.notifications, color: Colors.black),
             onPressed: () {},
           ),
         ],
       ),
-      body: _buildCurrentTab(),
-      bottomNavigationBar: _buildBottomNavigationBar(),
+      body: GestureDetector(
+        onScaleUpdate: (details) {
+          if (details.scale > _scaleThreshold && !_isGridView) {
+            setState(() => _isGridView = true);
+          } else if (details.scale < 1/_scaleThreshold && _isGridView) {
+            setState(() => _isGridView = false);
+          }
+        },
+        child: _buildCurrentTab(),
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.3),
+              spreadRadius: 2,
+              blurRadius: 10,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+          child: BottomNavigationBar(
+            currentIndex: _currentIndex,
+            onTap: (index) => setState(() => _currentIndex = index),
+            selectedItemColor: const Color(0xFF4289CE),
+            unselectedItemColor: Colors.grey,
+            backgroundColor: Colors.white,
+            elevation: 0,
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home),
+                label: 'Home',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.category),
+                label: 'Categories',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.person),
+                label: 'Developer',
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -160,96 +212,42 @@ class _HomePageState extends State<HomePage> {
   Widget _buildHomeTab() {
     return Column(
       children: [
-        if (_currentIndex == 0)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Center(
-              child: ToggleButtons(
-                isSelected: [!_isGridView, _isGridView],
-                selectedColor: Colors.white,
-                fillColor: const Color(0xFF4289CE),
-                borderRadius: BorderRadius.circular(30),
-                constraints: BoxConstraints(
-                  minHeight: 40,
-                  minWidth: ResponsiveHelper.responsiveValue(
-                    context,
-                    mobile: 120,
-                    tablet: 140,
-                    desktop: 160,
-                  ),
-                ),
-                children: <Widget>[
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const <Widget>[
-                        Icon(Icons.list),
-                        SizedBox(width: 8),
-                        Text('লিস্ট ভিউ'),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const <Widget>[
-                        Icon(Icons.grid_view),
-                        SizedBox(width: 8),
-                        Text('গ্রিড ভিউ'),
-                      ],
-                    ),
-                  ),
-                ],
-                onPressed: (int index) {
-                  setState(() {
-                    _isGridView = index == 1;
-                  });
-                },
-              ),
-            ),
-          ),
         Expanded(
           child: RefreshIndicator(
             onRefresh: () => _loadPosts(loadMore: false),
-            child: _isGridView ? _buildPostGrid() : _buildPostList(),
+            child: CustomScrollView(
+              controller: _scrollController,
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  sliver: _isGridView ? _buildPostGrid() : _buildPostList(),
+                ),
+                if (_isLoading && _nextPageToken != null)
+                  const SliverToBoxAdapter(
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+              ],
+            ),
           ),
         ),
-        if (_isLoading && _nextPageToken != null)
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: CircularProgressIndicator(),
-          ),
       ],
     );
   }
 
   Widget _buildPostList() {
-    return ListView.builder(
-      controller: _scrollController,
-      padding: const EdgeInsets.only(top: 8, bottom: 8),
-      itemCount: _filteredPosts.length,
-      itemBuilder: (context, index) {
-        return PostCard(
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+            (context, index) => PostCard(
           post: _filteredPosts[index],
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => PostDetailView(post: _filteredPosts[index]),
-              ),
-            );
-          },
-        );
-      },
+          onTap: () => _navigateToDetail(_filteredPosts[index]),
+        ),
+        childCount: _filteredPosts.length,
+      ),
     );
   }
 
   Widget _buildPostGrid() {
-    return GridView.builder(
-      controller: _scrollController,
-      padding: const EdgeInsets.all(8),
+    return SliverGrid(
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: ResponsiveHelper.responsiveGridCount(
           context,
@@ -266,43 +264,22 @@ class _HomePageState extends State<HomePage> {
         crossAxisSpacing: 8,
         mainAxisSpacing: 8,
       ),
-      itemCount: _filteredPosts.length,
-      itemBuilder: (context, index) {
-        return PostGridItem(
+      delegate: SliverChildBuilderDelegate(
+            (context, index) => PostGridItem(
           post: _filteredPosts[index],
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => PostDetailView(post: _filteredPosts[index]),
-              ),
-            );
-          },
-        );
-      },
+          onTap: () => _navigateToDetail(_filteredPosts[index]),
+        ),
+        childCount: _filteredPosts.length,
+      ),
     );
   }
 
-  Widget _buildBottomNavigationBar() {
-    return BottomNavigationBar(
-      currentIndex: _currentIndex,
-      onTap: (index) => setState(() => _currentIndex = index),
-      selectedItemColor: const Color(0xFF4289CE),
-      unselectedItemColor: const Color(0xFF888888),
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.category),
-          label: 'Categories',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: 'Developer',
-        ),
-      ],
+  void _navigateToDetail(dynamic post) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PostDetailView(post: post),
+      ),
     );
   }
 }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:examplay/services/blogger_service.dart';
 import 'package:examplay/widgets/post_detail_view.dart';
 import '../utils/responsive_helper.dart';
-import '../widgets/load_more_button.dart';
 
 class CategoryPostsScreen extends StatefulWidget {
   final String category;
@@ -69,9 +68,7 @@ class _CategoryPostsScreenState extends State<CategoryPostsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _errorMessage = 'Failed to load posts';
-        });
+        setState(() => _errorMessage = 'Failed to load posts');
       }
     } finally {
       if (mounted) {
@@ -85,14 +82,12 @@ class _CategoryPostsScreenState extends State<CategoryPostsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(widget.category),
-        backgroundColor: const Color(0xFF4289CE),
+        backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: Column(
         children: [
@@ -244,11 +239,6 @@ class _CategoryPostsScreenState extends State<CategoryPostsScreen> {
             const Padding(
               padding: EdgeInsets.only(bottom: 8.0),
               child: CircularProgressIndicator(),
-            ),
-          if (_nextPageToken != null && !_isLoadingMore && !_isLoading)
-            LoadMoreButton(
-              isLoading: false,
-              onPressed: () => _loadPosts(loadMore: true),
             ),
         ],
       ),

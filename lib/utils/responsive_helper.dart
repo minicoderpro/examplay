@@ -1,4 +1,3 @@
-// Create a new file: responsive_helper.dart
 import 'package:flutter/material.dart';
 
 class ResponsiveHelper {
