@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../utils/responsive_helper.dart';
 
 class PostCard extends StatelessWidget {
@@ -24,15 +23,15 @@ class PostCard extends StatelessWidget {
       margin: EdgeInsets.symmetric(
         horizontal: ResponsiveHelper.responsiveValue(
           context,
-          mobile: 16,
-          tablet: 24,
-          desktop: 32,
-        ),
-        vertical: ResponsiveHelper.responsiveValue(
-          context,
           mobile: 8,
           tablet: 12,
           desktop: 16,
+        ),
+        vertical: ResponsiveHelper.responsiveValue(
+          context,
+          mobile: 4,
+          tablet: 6,
+          desktop: 8,
         ),
       ),
       elevation: 1,
@@ -47,8 +46,8 @@ class PostCard extends StatelessWidget {
             ResponsiveHelper.responsiveValue(
               context,
               mobile: 8,
-              tablet: 12,
-              desktop: 16,
+              tablet: 10,
+              desktop: 12,
             ),
           ),
           child: Row(
@@ -57,29 +56,29 @@ class PostCard extends StatelessWidget {
               Container(
                 width: ResponsiveHelper.responsiveValue(
                   context,
-                  mobile: 80,
-                  tablet: 100,
-                  desktop: 120,
+                  mobile: 60,
+                  tablet: 80,
+                  desktop: 100,
                 ),
                 height: ResponsiveHelper.responsiveValue(
                   context,
-                  mobile: 80,
-                  tablet: 100,
-                  desktop: 120,
+                  mobile: 60,
+                  tablet: 80,
+                  desktop: 100,
                 ),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(4),
                   image: DecorationImage(
                     image: NetworkImage(thumbnailUrl),
-                    fit: BoxFit.fill,
+                    fit: BoxFit.cover,
                   ),
                 ),
               ),
               SizedBox(width: ResponsiveHelper.responsiveValue(
                 context,
-                mobile: 12,
-                tablet: 16,
-                desktop: 20,
+                mobile: 8,
+                tablet: 12,
+                desktop: 16,
               )),
               Expanded(
                 child: Column(
@@ -87,30 +86,45 @@ class PostCard extends StatelessWidget {
                   children: [
                     Text(
                       post['title'] ?? 'No title',
-                      style: const TextStyle(
-                        fontSize: 16,
+                      style: TextStyle(
+                        fontSize: ResponsiveHelper.responsiveValue(
+                          context,
+                          mobile: 14,
+                          tablet: 16,
+                          desktop: 18,
+                        ),
                         fontWeight: FontWeight.bold,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     Text(
                       _extractPlainText(post['content'] ?? ''),
-                      style: const TextStyle(
-                        fontSize: 14,
+                      style: TextStyle(
+                        fontSize: ResponsiveHelper.responsiveValue(
+                          context,
+                          mobile: 12,
+                          tablet: 14,
+                          desktop: 16,
+                        ),
                         color: Colors.grey,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     Align(
                       alignment: Alignment.centerRight,
                       child: Text(
                         _formatDate(post['published'] ?? ''),
-                        style: const TextStyle(
-                          fontSize: 12,
+                        style: TextStyle(
+                          fontSize: ResponsiveHelper.responsiveValue(
+                            context,
+                            mobile: 10,
+                            tablet: 12,
+                            desktop: 14,
+                          ),
                           color: Colors.grey,
                         ),
                       ),
@@ -131,7 +145,6 @@ class PostCard extends StatelessWidget {
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
   }
-
 
   String _formatDate(String dateString) {
     try {

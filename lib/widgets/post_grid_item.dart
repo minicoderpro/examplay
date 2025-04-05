@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../utils/responsive_helper.dart';
 
 class PostGridItem extends StatelessWidget {
@@ -9,12 +8,9 @@ class PostGridItem extends StatelessWidget {
   const PostGridItem({
     super.key,
     required this.post,
-    this.onTap = _defaultOnTap,
+    required this.onTap,
   });
 
-  static void _defaultOnTap() {}
-
-  // Update post_grid_item.dart
   @override
   Widget build(BuildContext context) {
     final thumbnailUrl = post['images']?.isNotEmpty == true
@@ -34,14 +30,23 @@ class PostGridItem extends StatelessWidget {
           children: [
             Expanded(
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(8),
+                ),
                 child: Image.network(
                   thumbnailUrl,
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    color: Colors.grey[300],
-                    child: const Icon(Icons.error),
-                  ),
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                            loadingProgress.expectedTotalBytes!
+                            : null,
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -49,32 +54,31 @@ class PostGridItem extends StatelessWidget {
               padding: EdgeInsets.all(
                 ResponsiveHelper.responsiveValue(
                   context,
-                  mobile: 8,
-                  tablet: 12,
-                  desktop: 16,
+                  mobile: 6,
+                  tablet: 8,
+                  desktop: 10,
                 ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    post['title'],
+                    post['title'] ?? 'No title',
                     style: TextStyle(
                       fontSize: ResponsiveHelper.responsiveValue(
                         context,
-                        mobile: 14,
-                        tablet: 16,
-                        desktop: 18,
+                        mobile: 12,
+                        tablet: 14,
+                        desktop: 16,
                       ),
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF333333),
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    _formatDate(post['published']),
+                    _formatDate(post['published'] ?? ''),
                     style: TextStyle(
                       fontSize: ResponsiveHelper.responsiveValue(
                         context,
@@ -82,7 +86,7 @@ class PostGridItem extends StatelessWidget {
                         tablet: 12,
                         desktop: 14,
                       ),
-                      color: const Color(0xFF888888),
+                      color: Colors.grey,
                     ),
                   ),
                 ],
