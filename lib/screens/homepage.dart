@@ -224,7 +224,12 @@ class _HomePageState extends State<HomePage> {
                 ),
                 if (_isLoading && _nextPageToken != null)
                   const SliverToBoxAdapter(
-                    child: Center(child: CircularProgressIndicator()),
+                    child: Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
                   ),
               ],
             ),

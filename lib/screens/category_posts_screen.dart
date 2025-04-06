@@ -89,158 +89,155 @@ class _CategoryPostsScreenState extends State<CategoryPostsScreen> {
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: _isLoading && !_isLoadingMore
-                ? const Center(child: CircularProgressIndicator())
-                : _errorMessage != null
-                ? Center(child: Text(_errorMessage!))
-                : _posts.isEmpty
-                ? Center(child: Text('No posts in ${widget.category}'))
-                : ListView.builder(
-              controller: _scrollController,
-              padding: EdgeInsets.all(
-                ResponsiveHelper.responsiveValue(
-                  context,
-                  mobile: 16,
-                  tablet: 24,
-                  desktop: 32,
-                ),
+      body: _isLoading && !_isLoadingMore
+          ? const Center(child: CircularProgressIndicator())
+          : _errorMessage != null
+          ? Center(child: Text(_errorMessage!))
+          : _posts.isEmpty
+          ? Center(child: Text('No posts in ${widget.category}'))
+          : ListView.builder(
+        controller: _scrollController,
+        padding: EdgeInsets.all(
+          ResponsiveHelper.responsiveValue(
+            context,
+            mobile: 16,
+            tablet: 24,
+            desktop: 32,
+          ),
+        ),
+        itemCount: _posts.length + (_isLoadingMore ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (index >= _posts.length) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: CircularProgressIndicator(),
               ),
-              itemCount: _posts.length,
-              itemBuilder: (context, index) {
-                final post = _posts[index];
-                final thumbnailUrl = post['images']?.isNotEmpty == true
-                    ? post['images'][0]['url']
-                    : 'https://via.placeholder.com/150';
+            );
+          }
+          final post = _posts[index];
+          final thumbnailUrl = post['images']?.isNotEmpty == true
+              ? post['images'][0]['url']
+              : 'https://via.placeholder.com/150';
 
-                return Card(
-                  margin: EdgeInsets.only(
-                    bottom: ResponsiveHelper.responsiveValue(
-                      context,
-                      mobile: 16,
-                      tablet: 20,
-                      desktop: 24,
-                    ),
+          return Card(
+            margin: EdgeInsets.only(
+              bottom: ResponsiveHelper.responsiveValue(
+                context,
+                mobile: 16,
+                tablet: 20,
+                desktop: 24,
+              ),
+            ),
+            child: InkWell(
+              onTap: () => _showPostDetail(context, post),
+              child: Padding(
+                padding: EdgeInsets.all(
+                  ResponsiveHelper.responsiveValue(
+                    context,
+                    mobile: 12,
+                    tablet: 16,
+                    desktop: 20,
                   ),
-                  child: InkWell(
-                    onTap: () => _showPostDetail(context, post),
-                    child: Padding(
-                      padding: EdgeInsets.all(
-                        ResponsiveHelper.responsiveValue(
-                          context,
-                          mobile: 12,
-                          tablet: 16,
-                          desktop: 20,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: ResponsiveHelper.responsiveValue(
+                        context,
+                        mobile: 80,
+                        tablet: 100,
+                        desktop: 120,
+                      ),
+                      height: ResponsiveHelper.responsiveValue(
+                        context,
+                        mobile: 80,
+                        tablet: 100,
+                        desktop: 120,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        image: DecorationImage(
+                          image: NetworkImage(thumbnailUrl),
+                          fit: BoxFit.cover,
                         ),
                       ),
-                      child: Row(
+                    ),
+                    SizedBox(width: ResponsiveHelper.responsiveValue(
+                      context,
+                      mobile: 12,
+                      tablet: 16,
+                      desktop: 20,
+                    )),
+                    Expanded(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            width: ResponsiveHelper.responsiveValue(
-                              context,
-                              mobile: 80,
-                              tablet: 100,
-                              desktop: 120,
-                            ),
-                            height: ResponsiveHelper.responsiveValue(
-                              context,
-                              mobile: 80,
-                              tablet: 100,
-                              desktop: 120,
-                            ),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              image: DecorationImage(
-                                image: NetworkImage(thumbnailUrl),
-                                fit: BoxFit.cover,
+                          Text(
+                            post['title'] ?? 'No title',
+                            style: TextStyle(
+                              fontSize: ResponsiveHelper.responsiveValue(
+                                context,
+                                mobile: 16,
+                                tablet: 18,
+                                desktop: 20,
                               ),
+                              fontWeight: FontWeight.bold,
                             ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          SizedBox(width: ResponsiveHelper.responsiveValue(
+                          SizedBox(height: ResponsiveHelper.responsiveValue(
                             context,
-                            mobile: 12,
-                            tablet: 16,
-                            desktop: 20,
+                            mobile: 8,
+                            tablet: 10,
+                            desktop: 12,
                           )),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  post['title'] ?? 'No title',
-                                  style: TextStyle(
-                                    fontSize: ResponsiveHelper.responsiveValue(
-                                      context,
-                                      mobile: 16,
-                                      tablet: 18,
-                                      desktop: 20,
-                                    ),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                SizedBox(height: ResponsiveHelper.responsiveValue(
+                          Text(
+                            _extractPlainText(post['content'] ?? ''),
+                            style: TextStyle(
+                              fontSize: ResponsiveHelper.responsiveValue(
+                                context,
+                                mobile: 14,
+                                tablet: 16,
+                                desktop: 18,
+                              ),
+                              color: Colors.grey,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          SizedBox(height: ResponsiveHelper.responsiveValue(
+                            context,
+                            mobile: 8,
+                            tablet: 10,
+                            desktop: 12,
+                          )),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              _formatDate(post['published'] ?? ''),
+                              style: TextStyle(
+                                fontSize: ResponsiveHelper.responsiveValue(
                                   context,
-                                  mobile: 8,
-                                  tablet: 10,
-                                  desktop: 12,
-                                )),
-                                Text(
-                                  _extractPlainText(post['content'] ?? ''),
-                                  style: TextStyle(
-                                    fontSize: ResponsiveHelper.responsiveValue(
-                                      context,
-                                      mobile: 14,
-                                      tablet: 16,
-                                      desktop: 18,
-                                    ),
-                                    color: Colors.grey,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
+                                  mobile: 12,
+                                  tablet: 14,
+                                  desktop: 16,
                                 ),
-                                SizedBox(height: ResponsiveHelper.responsiveValue(
-                                  context,
-                                  mobile: 8,
-                                  tablet: 10,
-                                  desktop: 12,
-                                )),
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: Text(
-                                    _formatDate(post['published'] ?? ''),
-                                    style: TextStyle(
-                                      fontSize: ResponsiveHelper.responsiveValue(
-                                        context,
-                                        mobile: 12,
-                                        tablet: 14,
-                                        desktop: 16,
-                                      ),
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                                color: Colors.grey,
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                );
-              },
+                  ],
+                ),
+              ),
             ),
-          ),
-          if (_nextPageToken != null && _isLoadingMore)
-            const Padding(
-              padding: EdgeInsets.only(bottom: 8.0),
-              child: CircularProgressIndicator(),
-            ),
-        ],
+          );
+        },
       ),
     );
   }
